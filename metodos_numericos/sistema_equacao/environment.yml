@@ -1,0 +1,13 @@
+name: mn
+channels:
+  - conda-forge
+dependencies:
+  - python==3.13
+  - pandas
+  - numpy
+  - sympy
+  - matplotlib
+  - seaborn
+  - nbformat
+  - ipykernel
+  - pip

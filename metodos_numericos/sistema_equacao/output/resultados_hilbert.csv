@@ -1,0 +1,13 @@
+n,method,time,abs_error,rel_error
+5,jacobi,nan s,nan,nan
+5,gauss_seidel,2.5183619e+01 s,1.0000000e+00,1.0000000e+00
+5,relaxing_0.8,3.7759236e+01 s,1.0000000e+00,1.0000000e+00
+5,relaxing_1.12,1.9605934e+01 s,1.0000000e+00,1.0000000e+00
+9,jacobi,nan s,nan,nan
+9,gauss_seidel,nan s,nan,nan
+9,relaxing_0.8,nan s,nan,nan
+9,relaxing_1.12,nan s,nan,nan
+15,jacobi,nan s,nan,nan
+15,gauss_seidel,nan s,nan,nan
+15,relaxing_0.8,nan s,nan,nan
+15,relaxing_1.12,nan s,nan,nan

@@ -1,0 +1,24 @@
+3. Materiais e métodos
+	Materiais:
+		Ferramentas utilizadas: linguagem Python com bibliotecas NumPy e SciPy.
+		Matrizes utilizadas: Matriz de Hilbert (grau 5, grau 9 e 15), Matrizes da inversa
+		Métodos comparados:
+			Diretos: Eliminação de Gauss, Fatoração LU.
+			Iterativos: Jacobi, Gauss-Seidel (e SOR se possível).
+
+	Metodologia:
+		Calculo do condicionamento das matrizes: Determinante, Número de condicionamento
+		Calculo dos critérios de convergência para métodos iterativos
+		Avaliação da precisão: Erro absoluto e relativo comparado à solução exata
+		Avaliação do desempenho: Tempo de execução dos métodos
+		Avaliação da convergência: número de iteração e tolerância
+		Calculo da inversa
+
+
+
+4. Resultados e discussão
+	Tabela/Gráfico com precisão dos métodos
+	Tabela/Gráfico com convergência dos métodos
+	Tabela/Gráfico com desempenho dos métodos
+
+	Inversa via LU
