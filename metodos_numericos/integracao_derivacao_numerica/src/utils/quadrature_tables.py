@@ -1,4 +1,4 @@
-def legendre_table(n :int):
+def legendre_table(n :int) -> dict | None:
     dict_args :dict = {}
     
     dict_args[2] = {"c": [1, 1], 
@@ -22,7 +22,7 @@ def legendre_table(n :int):
     else:
         return dict_args[n]
     
-def tchebyshev_table(n :int):
+def tchebyshev_table(n :int) -> dict | None:
     dict_args :dict = {}
     
     dict_args[2] = {"c": [1.570796326, 1.570796326],
@@ -56,7 +56,7 @@ def tchebyshev_table(n :int):
     else:
         return dict_args[n]
     
-def hermite_table(n :int):
+def hermite_table(n :int) -> dict | None:
     dict_args :dict = {}
     
     dict_args[2] = {"c": [0.8862269254, 0.8862269254],
@@ -90,7 +90,7 @@ def hermite_table(n :int):
     else:
         return dict_args[n]
     
-def laguerre_table(n :int):
+def laguerre_table(n :int) -> dict | None:
     dict_args :dict = {}
 
     dict_args[2] = {"c": [0.8535533905, 0.1464466094],

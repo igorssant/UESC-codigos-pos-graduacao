@@ -22,11 +22,11 @@ def trapezoid_integral(func :Union[str, Callable[[np.float64], np.float64]],
 def multiple_trapezoid_integral(func :Union[str, Callable[[np.float64], np.float64]],
                                 a :np.float64,
                                 b :np.float64,
-                                n :int) -> np.float64:
-    if n < 1:
+                                h :np.float64,
+                                n :np.int64) -> np.float64:
+    if n < np.int64(1):
         raise ValueError("O número de pontos (n) deve ser pelo menos 1.")
 
-    h :int = int((b - a) / n)
     x :np.float64 = a
     summ :np.float64 = evaluate_one_variable(func, x)
 
@@ -51,7 +51,7 @@ def simpson13_integral(func :Union[str, Callable[[np.float64], np.float64]],
 def multiple_simpson13_integral(func :Union[str, Callable[[np.float64], np.float64]],
                                 a :np.float64,
                                 b :np.float64,
-                                n :int) -> np.float64:
+                                n :np.int64) -> np.float64:
     if n < 1:
         raise ValueError("O número de pontos (n) deve ser pelo menos 1.")
 
@@ -102,23 +102,23 @@ def richards_extrapolation(func :Union[str, Callable[[np.float64], np.float64]],
 def gauss_quadrature(func :str,
                      a :np.float64,
                      b :np.float64,
-                     n :int) -> np.float64:
+                     n :np.int64) -> np.float64:
     if not isinstance(func, str):
         raise ValueError("A função (func) deve ser uma string.")
 
-    if n < 1:
+    if n < np.int64(1):
         raise ValueError("O número de pontos (n) deve ser pelo menos 1.")
 
-    tables :list[Callable] = [legendre_table, tchebyshev_table, laguerre_table, hermite_table]
-    table :Callable = tables[0]
+    tables :list[Callable[[int], dict]] = [legendre_table, tchebyshev_table, laguerre_table, hermite_table]
+    table :Callable[[int], dict] = tables[0]
 
-    if re.match("\s*\(*\s*1\s*/\s*(np.sqrt|sqrt)\(\s*1\s*-\s*x\s*\*\*\s*2\s*\)\s*\)*\s*\*\s*", func):
+    if re.match(r"\s*\(?\s*1\s*/\s*(np\.sqrt|sqrt)\(\s*1\s*-\s*x\s*\*\*\s*2\s*\)\s*\)?\s*\*\s*", func):
         print("Tchebyshev")
         table = tables[1]
-    elif re.match("\s*\(*\s*((np|math).exp\(\s*-x\s*\*\*\s*2\s*\)|math.e\s*\*\*\s*-x\s*\*\*\s*2)\s*\)*\s*\**\s*", func):
+    elif re.match(r"\s*\(?\s*((np|math)\.exp\(\s*-x\s*\*\*\s*2\s*\)|math\.e\s*\*\*\s*-x\s*\*\*\s*2)\s*\)?\s*\*\s*", func):
         print("Hermite")
         table = tables[3]
-    elif re.match("\s*\(*\s*((np|math).exp\(\s*-x\s*\)|math.e\s*\*\*\s*-x\s*)\s*\)*\s*\**\s*", func):
+    elif re.match(r"\s*\(?\s*((np|math)\.exp\(\s*-x\s*\)|math\.e\s*\*\*\s*-x\s*)\s*\)?\s*\*\s*", func):
         print("Laguerre")
         table = tables[2]
 
@@ -144,3 +144,24 @@ def gauss_quadrature(func :str,
         final_result[i] = c[i] * evaluate_one_variable(func, x[i])
 
     return final_result.sum()
+
+def simpson_integration(func :Union[str, Callable[[np.float64], np.float64]],
+                        a :np.float64,
+                        b :np.float64,
+                        h :np.float64,
+                        n :np.int64) -> np.float64:
+    if n % 2 != np.int64(0):
+        raise ValueError(f"*n* deve ser par. Ao invés disso foi passado o valor: {n}.\n")
+
+    integral :np.float64 = evaluate_one_variable(func, a) +\
+                           evaluate_one_variable(func, b)
+    
+    for i in range(1, n, 2):
+        xi :np.float64 = a + i * h
+        integral += 4 * evaluate_one_variable(func, xi)
+
+    for i in range(2, n - 1, 2):
+        xi = a + i * h
+        integral += 2 * evaluate_one_variable(func, xi)
+
+    return integral * (h / 3)
