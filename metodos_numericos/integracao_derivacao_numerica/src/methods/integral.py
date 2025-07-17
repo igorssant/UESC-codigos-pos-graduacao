@@ -22,21 +22,25 @@ def trapezoid_integral(func :Union[str, Callable[[np.float64], np.float64]],
 def multiple_trapezoid_integral(func :Union[str, Callable[[np.float64], np.float64]],
                                 a :np.float64,
                                 b :np.float64,
-                                h :np.float64,
-                                n :np.int64) -> np.float64:
-    if n < np.int64(1):
-        raise ValueError("O número de pontos (n) deve ser pelo menos 1.")
+                                h :np.float64) -> np.float64:
+    if b < a:
+        raise ValueError("O limite inferior 'a' deve ser menor ou igual ao limite superior 'b'.")
+    
+    if h <= np.float64(0.0):
+        raise ValueError("O tamanho do passo 'h' deve ser um valor estritamente positivo.")
 
-    x :np.float64 = a
-    summ :np.float64 = evaluate_one_variable(func, x)
+    n :np.int64 = np.int64((b - a) / h)
 
-    for i in range(n - 1):
-        x += h
-        summ = summ + 2 * evaluate_one_variable(func, x)
+    if n == 0 and not np.isclose(a, b):
+        raise ValueError("O número de subintervalos é zero. O passo 'h' é muito grande para o intervalo dado.")
+ 
+    integral_sum :np.float64 = (evaluate_one_variable(func, a) + evaluate_one_variable(func, b)) / np.float64(2.0)
 
-    summ += evaluate_one_variable(func, b)
+    for i in range(1, n):
+        x_i :np.float64 = a + i * h
+        integral_sum += evaluate_one_variable(func, x_i)
 
-    return (b - a) * summ / (2 * n)
+    return integral_sum * h
 
 def simpson13_integral(func :Union[str, Callable[[np.float64], np.float64]],
                        a :np.float64,
@@ -148,20 +152,26 @@ def gauss_quadrature(func :str,
 def simpson_integration(func :Union[str, Callable[[np.float64], np.float64]],
                         a :np.float64,
                         b :np.float64,
-                        h :np.float64,
-                        n :np.int64) -> np.float64:
-    if n % 2 != np.int64(0):
-        raise ValueError(f"*n* deve ser par. Ao invés disso foi passado o valor: {n}.\n")
-
-    integral :np.float64 = evaluate_one_variable(func, a) +\
-                           evaluate_one_variable(func, b)
+                        h :np.float64) -> np.float64:
+    if b < a:
+        raise ValueError("O limite inferior 'a' deve ser menor ou igual ao limite superior 'b'.")
     
-    for i in range(1, n, 2):
-        xi :np.float64 = a + i * h
-        integral += 4 * evaluate_one_variable(func, xi)
+    if h <= np.float64(0.0):
+        raise ValueError("O tamanho do passo 'h' deve ser um valor estritamente positivo.")
 
-    for i in range(2, n - 1, 2):
-        xi = a + i * h
-        integral += 2 * evaluate_one_variable(func, xi)
+    n :np.int64 = np.int64((b - a) / h)
+    
+    if n % 2 != np.int64(0):
+        raise ValueError("O método de Simpson só funciona com intervalos pares. Ao invés disso n = %d" % n)
 
-    return integral * (h / 3)
+    integral_sum :np.float64 = evaluate_one_variable(func, a) + evaluate_one_variable(func, b)
+
+    for i in range(1, n):
+        x_i :np.float64 = a + i * h
+        
+        if i % 2 == 1:
+            integral_sum += 4 * evaluate_one_variable(func, x_i)
+        else:
+            integral_sum += 2 * evaluate_one_variable(func, x_i)
+
+    return np.float64((h / 3.0) * integral_sum)

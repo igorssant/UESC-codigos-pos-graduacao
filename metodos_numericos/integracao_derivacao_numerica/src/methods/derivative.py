@@ -118,7 +118,7 @@ def backward_difference_euler(func :Union[str, Callable[[np.float64], np.float64
         raise ValueError("O tamanho do passo 'h' deve ser um valor menor que zero.")
 
     fx_0 :np.float64 = evaluate_one_variable(func, x0)
-    fx_minus_h = evaluate_one_variable(func, x0 - h)
+    fx_minus_h :np.float64 = evaluate_one_variable(func, x0 - h)
 
     return (fx_0 - fx_minus_h) / h
 
