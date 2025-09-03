@@ -4,17 +4,15 @@
 #include <locale.h>
 #include <math.h>
 
-#define PARAMS 2
-
 void include_portuguese() {
-    if (setlocale(LC_ALL, "pt_BR.UTF-8") == NULL) {
+    if(setlocale(LC_ALL, "pt_BR.UTF-8") == NULL) {
         setlocale(LC_ALL, "");
     }
 
     return;
 }
 
-void calculate_gradient(double *x, double *y, double* theta, int data_size, double learning_rate, int max_iter, double tolerance) {
+void calculate_gradient(double *x, double *y, double *theta, int data_size, double learning_rate, int max_iter, double tolerance) {
     double errors[data_size],
         predict = 0.0,
         gradient_w0 = 0.0,
