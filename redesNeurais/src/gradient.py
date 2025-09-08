@@ -214,8 +214,10 @@ def main() -> None:
 
     print(f"O resultado é: {result}\n{info_text}")
 
+    exec_multimodal_gradiente_descent(rastrigin_functional, rastrigin_gradient)
+
 
 if __name__ == "__main__":
     # test()
-    # main()
-    exec_multimodal_gradiente_descent(rastrigin_functional, rastrigin_gradient)
+    main()
+    
