@@ -1,0 +1,6 @@
+TRABALHO 1:
+https://query.libretexts.org/Idioma_Portugues/Livro%3A_Calculus_(OpenStax)/14%3A_Diferencia%C3%A7%C3%A3o_de_fun%C3%A7%C3%B5es_de_v%C3%A1rias_vari%C3%A1veis/14.01%3A_Fun%C3%A7%C3%B5es_de_v%C3%A1rias_vari%C3%A1veis#:~:text=Na%20figura%20b%2C%20a%20fun%C3%A7%C3%A3o%20f%20(x%2C,dobras%20paralelas%20aos%20eixos%20x%20e%20y.
+https://en.m.wikipedia.org/wiki/Function_of_several_real_variables
+
+função de Rastrigin
+f(x, y) = 20 + (x^2 − 10 * cos(2*π*x)) + (y^2 − 10 * cos(2*π*y))
