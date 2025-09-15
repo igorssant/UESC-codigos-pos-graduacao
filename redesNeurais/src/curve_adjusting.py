@@ -204,21 +204,29 @@ def gradient_descent(df :pd.DataFrame,
 
 def main():
     data :pd.DataFrame = pd.read_csv("src/datasets/raw/trabalho_2_dados.csv", decimal=",")
-    initial_points :NDArray[np.float64] = np.array([0.1, 0.1, 0.1], dtype=np.float64)
+    initial_points :NDArray[np.float64] = np.array([[0.1, 0.1, 0.1],
+                                                    [-0.1, 2.0, -1.0],
+                                                    [0.5, -10.0, 2.0],
+                                                    [5.0, -1.0, 7.0]], dtype=np.float64)
 
     data = __convert_rows_to_float(data)
     
     for alpha in [0.01, 0.02, 0.1, 0.5]:
-        parameters, number_iterations = gradient_descent(data,
-                                                         initial_points,
-                                                         alpha,
-                                                         np.float64(1e-5),
-                                                         1000,
-                                                         "mse",
-                                                         1)
-        print(parameters)
-        print(number_iterations)
-        print("=" * 80)
+        parameters :NDArray[np.float64]
+        number_iterations :int
+
+        for i in range(0, initial_points.shape[0]):
+            parameters, number_iterations = gradient_descent(data,
+                                                             initial_points[i, :],
+                                                             alpha,
+                                                             np.float64(1e-5),
+                                                             1000,
+                                                             "mse",
+                                                             1)
+            print(f"Para os pontos {initial_points[i, :]} temos que:")
+            print(parameters)
+            print(number_iterations)
+            print("=" * 80)
 
 
 if __name__ == "__main__":
