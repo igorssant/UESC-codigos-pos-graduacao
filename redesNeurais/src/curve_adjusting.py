@@ -82,13 +82,16 @@ def cost(y_true :np.float64, y_pred :np.float64, method :str = "mse") -> np.floa
     :param: method      (String).
     """
 
-    if method == "mse":
-        return np.mean((y_true - y_pred)**2)
-    elif method == "mae":
-        return np.mean(np.abs(y_true - y_pred))
-    else:
-        raise ValueError("Método de custo incorreto.\n" +
-                         "Use 'mse' ou 'mae'.")
+    match method:
+        case "mse":
+            return np.mean((y_true - y_pred)**2)
+        case "rmse":
+            return np.srqt(np.mean((y_true - y_pred)**2))
+        case "mae":
+            return np.mean(np.abs(y_true - y_pred))
+        case _:
+            raise ValueError("Método de custo incorreto.\n" +
+                             "Use 'mse', 'rmse' ou 'mae'.")
 
 
 def gradients(x :NDArray[np.float64],
@@ -129,7 +132,7 @@ def gradients(x :NDArray[np.float64],
         dc = (1/n) * np.sum(error)
     else:
         raise ValueError("Método de custo incorreto.\n" +
-                         "Use 'mse' ou 'mae'.")
+                         "Use 'mse', 'rmse' ou 'mae'.")
 
     return np.array([da, db, dc], dtype=np.float64)
 
@@ -137,6 +140,7 @@ def gradients(x :NDArray[np.float64],
 def gradient_descent(df :pd.DataFrame,
                      initial_points : Union[NDArray[np.float64], list[np.float64], list[float]],
                      alpha :np.float64,
+                     tol :np.float64 = np.float64(1e-4),
                      max_iter :int = 1000,
                      cost_method :str = "mse",
                      normalization_method :int = 0) -> Tuple[NDArray[np.float64], list[np.float64]]:
@@ -162,8 +166,9 @@ def gradient_descent(df :pd.DataFrame,
     # gradients_history: list[np.float64] = list()
     parameters :NDArray[np.float64] = np.array(initial_points, dtype=np.float64)
     number_iterations :int = 0
+    previous_J :np.float64 = np.float64(0.0)
 
-    for epoch in range(0, max_iter):
+    for _ in range(0, max_iter):
         # funcional
         z_predicted :NDArray[np.float64] = predict(x_normalized,
                                                    y_normalized,
@@ -188,6 +193,11 @@ def gradient_descent(df :pd.DataFrame,
         # atualizando os parametros
         parameters -= alpha * new_gradients
 
+        if abs(J - previous_J) < tol:
+            break
+        
+        previous_J = J
+
     # return (parameters, gradients_history)
     return (parameters, number_iterations)
 
@@ -195,12 +205,14 @@ def gradient_descent(df :pd.DataFrame,
 def main():
     data :pd.DataFrame = pd.read_csv("src/datasets/raw/trabalho_2_dados.csv", decimal=",")
     initial_points :NDArray[np.float64] = np.array([0.1, 0.1, 0.1], dtype=np.float64)
+
     data = __convert_rows_to_float(data)
     
     for alpha in [0.01, 0.02, 0.1, 0.5]:
         parameters, number_iterations = gradient_descent(data,
                                                          initial_points,
                                                          alpha,
+                                                         np.float64(1e-5),
                                                          1000,
                                                          "mse",
                                                          1)
