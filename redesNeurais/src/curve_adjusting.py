@@ -210,7 +210,7 @@ def main():
                                                     [5.0, -1.0, 7.0]], dtype=np.float64)
 
     data = __convert_rows_to_float(data)
-    
+
     for alpha in [0.01, 0.02, 0.1, 0.5]:
         parameters :NDArray[np.float64]
         number_iterations :int
