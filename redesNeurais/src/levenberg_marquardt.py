@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 
 
-def __convert_rows_to_float(df :pd.DataFrame) -> pd.DataFrame:
-    """função __convert_rows_to_float
+def convert_rows_to_float(df :pd.DataFrame) -> pd.DataFrame:
+    """Função convert_rows_to_float
     Recebe o dataframe e converte cada coluna para np.float64
     :param: df (pd.DataFrame).
     :return: operated_df (pd.DataFrame).
@@ -61,7 +61,7 @@ def predict(x :NDArray[np.float64],
             a :np.float64,
             b :np.float64,
             c :np.float64) -> NDArray[np.float64]:
-    """função predict
+    """Função predict
     Usa o modelo: 'z = a*x^3 + b*y^2 + c' e retorna seu resultado.
     :param: x   (NDArray[np.float64]).
     :param: y   (NDArray[np.float64]).
@@ -75,7 +75,7 @@ def predict(x :NDArray[np.float64],
 
 
 def cost(y_true :NDArray[np.float64], y_pred :NDArray[np.float64], method :str = "mse") -> np.float64:
-    """função cost
+    """Função cost
     Realiza o calculo do custo.
     :param: y_true      (np.float64).
     :param: y_predicted (np.float64).
@@ -94,9 +94,9 @@ def cost(y_true :NDArray[np.float64], y_pred :NDArray[np.float64], method :str =
                              "Use 'mse', 'rmse' ou 'mae'.")
 
 
-def __calculate_jacobian(x :NDArray[np.float64],
-                         y :NDArray[np.float64]) -> NDArray[np.float64]:
-    """
+def calculate_jacobian(x :NDArray[np.float64],
+                       y :NDArray[np.float64]) -> NDArray[np.float64]:
+    """ Função calculate_jacobian
     Calcula a matriz Jacobiana dos resíduos em relação aos parâmetros a, b, c.
     J = [ dr/da, dr/db, dr/dc ]
     Onde r = z_predito - z_real
@@ -125,7 +125,7 @@ def levenberg_marquardt(
     max_iter: int = 1000,
     normalization_method: int = 0
 ) -> Tuple[NDArray[np.float64], int]:
-    """
+    """ Função levenberg_marquardt
     Executa o algoritmo de Levenberg-Marquardt para os valores de a, b, c.
     :param: df (pd.DataFrame).
     :param: initial_points (NDArray[np.float64]).
@@ -159,13 +159,14 @@ def levenberg_marquardt(
         if np.abs(previous_cost - current_cost) < tol:
             break
 
-        jacobian = __calculate_jacobian(x_normalized, y_normalized)
+        jacobian = calculate_jacobian(x_normalized, y_normalized)
 
         # (J^T * J + lambda * I) * delta_p = J^T * r
         J_trasposed_times_J :NDArray[np.float64] = jacobian.T @ jacobian
 
         jacobian = jacobian.T @ residuals
 
+        # hessiana
         H_lm :NDArray[np.float64] = J_trasposed_times_J + damping_factor * np.eye(J_trasposed_times_J.shape[0])
 
         # resolver para a atualização de parametros
@@ -184,7 +185,7 @@ def levenberg_marquardt(
                                   new_parameters[0],
                                   new_parameters[1],
                                   new_parameters[2])
-        new_cost = np.sum((z_normalized - new_z_predicted)**2)
+        new_cost = cost(z_normalized, new_z_predicted, method="mse")
 
         if new_cost < current_cost:
             # reduz o fator de amortecimento
@@ -199,14 +200,14 @@ def levenberg_marquardt(
     return (parameters, number_iterations)
 
 
-def main():
+def main() -> None:
     data :pd.DataFrame = pd.read_csv("src/datasets/raw/trabalho_2_dados.csv", decimal=",")
     initial_points :NDArray[np.float64] = np.array([[0.1, 0.1, 0.1],
                                                     [-0.1, 2.0, -1.0],
                                                     [0.5, -10.0, 2.0],
                                                     [5.0, -1.0, 7.0]], dtype=np.float64)
 
-    data = __convert_rows_to_float(data)
+    data = convert_rows_to_float(data)
 
     for alpha in [0.01, 0.02, 0.1, 0.5]:
         parameters :NDArray[np.float64]
@@ -218,7 +219,6 @@ def main():
                                                                 alpha,
                                                                 np.float64(1e-5),
                                                                 1000,
-                                                                "mse",
                                                                 1)
             print(f"Para os pontos {initial_points[i, :]} temos que:")
             print(parameters)
