@@ -1,5 +1,5 @@
 from typing import Callable, List, Tuple
-from Neuron import Neuron
+from models.Neuron import Neuron
 import pandas as pd
 import numpy as np
 
@@ -8,8 +8,8 @@ class NeuronNetwork:
     def __init__(self,
                  inputSize :int,
                  layerSizes :list[int],
-                 activationFunction :Callable[[np.ndarray] -> np.float64],
-                 outputActivation :Callable[[np.ndarray] -> np.float64],
+                 activationFunction :Callable[[np.ndarray], np.float64],
+                 outputActivation :Callable[[np.ndarray], np.float64],
                  learningRate :np.float64 = np.float64(0.01)) -> None:
         
         if inputSize < 1:
@@ -19,15 +19,15 @@ class NeuronNetwork:
 
         self.__inputSize :int = inputSize
         self.__learningRate :np.float64 = learningRate
-        self.__layers : List[List[Neuron] = [] 
+        self.__layers : List[List[Neuron]] = [] 
         self.__initializeNetwork(inputSize, layerSizes, activationFunction, outputActivation)
 
 
     def __initializeNetwork(self,
                             inputSize :int,
                             layerSizes :List[Neuron],
-                            activationFunction :Callable[[np.ndarray] -> np.float64],
-                            outputActivation :Callable[[np.ndarray] -> np.float64]) -> None:
+                            activationFunction :Callable[[np.ndarray], np.float64],
+                            outputActivation :Callable[[np.ndarray], np.float64]) -> None:
         # o numero de entradas para a primeira camada é inputSize
         previousInputs :int = inputSize
         
@@ -37,7 +37,7 @@ class NeuronNetwork:
             # a famosa camada de saida
             isOutputLayer :bool = (i == len(layerSizes) - 1)
             # escolhe a função de ativação
-            activationFunc :Callable[[np.ndarray] -> np.float64] = outputActivation\
+            activationFunc :Callable[[np.ndarray], np.float64] = outputActivation\
                 if isOutputLayer\
                 else activationFunction
 
@@ -49,11 +49,11 @@ class NeuronNetwork:
                 )
                 currentLayer.append(neuron)
 
-            self.__layers.append(current_layer)
+            self.__layers.append(currentLayer)
 
             # o numero de entradas da proxima camada
             # é o numero de neuronios na camada atual
-            previousInputs = quantityOfNeuron
+            previousInputs = quantityOfNeurons
 
 
     def __calculateOutputLayerDeltas(self, targets :np.ndarray) -> None:
@@ -142,7 +142,7 @@ class NeuronNetwork:
 
                 for neuron in layer:
                     localGradient :np.ndarray = getattr(neuron, '_delta')
-                    neuron.backPropagation(local_gradient, self.__learning_rate)
+                    neuron.backPropagation(localGradient, self.__learningRate)
                     
         return errors
 
