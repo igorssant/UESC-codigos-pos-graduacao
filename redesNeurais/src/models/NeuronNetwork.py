@@ -10,7 +10,7 @@ class NeuronNetwork:
                  layerSizes :list[int],
                  activationFunction :Callable[[np.ndarray], np.float64],
                  outputActivation :Callable[[np.ndarray], np.float64],
-                 learningRate :np.float64 = np.float64(0.01)) -> None:
+                 learningRate :np.float64 = np.float64(0.0001)) -> None:
         
         if inputSize < 1:
             raise ValueError("O tamanho da entrada deve ser positivo.")

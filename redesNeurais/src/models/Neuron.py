@@ -18,9 +18,9 @@ class Neuron:
         limit :np.float64 = np.float64(1.0) / np.sqrt(quantityOfInputs)
 
         self.__weights :np.ndarray = np.random.uniform(
-            low=-limit,
-            high=limit,
-            size=(quantityOfInputs, 1)
+            low = -limit * np.float64(0.01),
+            high = limit * np.float64(0.01),
+            size = (quantityOfInputs, 1)
         ).astype(np.float64)
         self.__weightedSum :np.float64 = np.float64(0.0)
         self.__output :np.float64 = np.float64(0.0)
@@ -67,6 +67,15 @@ class Neuron:
 
 
     def backPropagation(self, localGradient :np.float64, learningRate :np.float64) -> np.ndarray:
+        # se o gradiente local for NaN -> retornar 0
+        # para acitar futuras complicacoes
+        if np.isnan(localGradient):
+            return np.zeros_like(self.__weights) * 0.0 
+
+        clipLimit :np.float64 = np.float64(1.0)
+
+        localGradient = np.clip(localGradient, -clipLimit, clipLimit)
+
         gradientBias :np.float64 = localGradient
         gradientWeights :np.ndarray = localGradient * self.__inputs
         

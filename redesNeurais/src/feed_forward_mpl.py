@@ -53,7 +53,7 @@ def main() -> None:
                                            layer_sizes,
                                            tanh,
                                            linear,
-                                           np.float64(0.01))
+                                           np.float64(0.001))
     inputs :np.ndarray = X_normalized
     targets :np.ndarray = Y_normalized
     number_of_samples :int = inputs.shape[0]
