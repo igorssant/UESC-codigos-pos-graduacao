@@ -1,3 +1,4 @@
+from utils.activation_functions import *
 from typing import Callable, List, Tuple
 from models.Neuron import Neuron
 import pandas as pd
@@ -145,4 +146,85 @@ class NeuronNetwork:
                     neuron.backPropagation(localGradient, self.__learningRate)
                     
         return errors
+
+
+    def getWeightsArray(self) -> np.ndarray:
+        weights :List[np.ndarray] = []
+
+        for layer in self.__layers:
+            for neuron in layer:
+                weights.extend(neuron.getWeights().flatten())
+                weights.append(neuron.getBias())
+
+        return np.array(weights, dtype=np.float64)
+
+
+    def setWeightsArray(self, weightsArray :np.ndarray) -> None:
+        cursor :int = 0
+        
+        for layer in self.__layers:
+            for neuron in layer:
+                numberOfWeights :int = neuron.getWeights().size
+                newWeights :np.ndarray = weightsArray[cursor : cursor + numberOfWeights].reshape(-1, 1)
+                neuron.setWeights(newWeights)
+                cursor += numWeights
+
+                newBias :np.float64 = weightsArray[cursor]
+                neuron.setBias(newBias)
+                cursor += 1
+
+
+    def calculateJacobian(self, X :np.ndarray) -> np.ndarray:
+        N :int = X.shape[0]
+        numberOfParams :int = len(self.get_weights_vector())
+        J :np.ndarray = np.zeros((N, n_params))
+
+        hiddenLayer :List[Neurons] = self.__layers[0]
+        outputNeuron :Neuron = self.__layers[1][0]
+    
+        for k in range(N):
+            inputSample :np.ndarray = X[k, :].reshape(-1, 1)
+            # obter as ativacoes
+            self.feedForward(inputSample) 
+
+            # delta da saida
+            outputWeightedSum :np.float64 = outputNeuron._Neuron__weightedSum
+            outputActivation : np.float64 = outputNeuron.getOutput()
+
+            # derivada da ativacao de saida
+            derivOutput = linear_derivative(outputActivation) 
+            # preenchendo colunas da jacobiana
+            cursor :int = 0
+
+            # pesos da camada escondida
+            for j, hiddenNeuron in enumerate(hiddenLayer):
+                hiddenOutput :np.float64 = hiddenNeuron.getOutput()
+                hiddenWeightedSum :np.float64 = hiddenNeuron._Neuron__weightedSum
+
+                # backpropagation - 1 ordem
+                weightOutputJ :np.float64 = output_neuron.getWeights()[j, 0]
+                deltaHidden :np.float64 = derivOutput * weightOutputJ * tanh_derivative(hiddenOutput) 
+                inputValues :np.ndarray = hiddenNeuron._Neuron__inputs.flatten()
+
+                # pesos
+                for i in range(input_values.size):
+                    J[k, cursor] = deltaHidden * inputValues[i]
+                    cursor += 1
+
+                # bias
+                J[k, cursor] = deltaHidden * np.float64(1.0)
+                cursor += 1
+
+            # pesos da camada de saída
+            hiddenOutputsNoBias = [n.getOutput() for n in hiddenLayer]
+        
+            for ah in hiddenOutputsNoBias:
+                J[k, cursor] = derivOutput * ah
+                cursor += 1
+            
+            # bias
+            J[k, cursor] = derivOutput * np.float64(1.0)
+            cursor += 1
+        
+        return J
 
