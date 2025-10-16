@@ -1,6 +1,7 @@
 from utils.activation_functions import *
 from models.NeuronNetwork import NeuronNetwork
 from matplotlib import pyplot as plt
+from utils.utils import *
 from typing import Tuple
 import pandas as pd
 import numpy as np
@@ -55,6 +56,30 @@ def split_data(X :np.ndarray,
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
+def predict_batch(network :NeuronNetwork, X_data: np.ndarray) -> np.ndarray:
+    """
+    Realiza o feedForward para um conjunto completo de dados (X_data),
+    iterando amostra por amostra, pois a rede só aceita uma entrada 1D.
+    Retorna Y_pred no formato (N_amostras, N_outputs).
+    """
+
+    N = X_data.shape[0]
+
+    if network._NeuronNetwork__layers and network._NeuronNetwork__layers[-1]:
+        N_outputs = len(network._NeuronNetwork__layers[-1])
+    else:
+        N_outputs = 1 
+
+    Y_pred = np.zeros((N, N_outputs), dtype=np.float64)
+
+    for i in range(N):
+        input_sample = X_data[i, :].reshape(-1, 1)
+        output = network.feedForward(input_sample).flatten()
+        Y_pred[i, :] = output
+
+    return Y_pred
+
+
 def train_lm_full(network :NeuronNetwork, 
                   X_train :np.ndarray,
                   Y_train :np.ndarray,
@@ -70,24 +95,29 @@ def train_lm_full(network :NeuronNetwork,
     }
     best_val_mse = np.inf
     epochs_no_improvement = 0
-    a = model.getWeightsArray()
+    a = network.getWeightsArray()
+    # a = a.reshape(-1, 1)
+    print(f"Tamanho REAL de 'a' no início da época: {a.size}")
     lambda_val = initial_lambda
-    v = 2.0
+    v = np.float64(2.0)
+    LIMIT_V = np.float64(1e10)
+    LIMIT_LAMBDA = np.float64(1e30)
     # custo inicial
-    Y_pred_train = model.feedForward(X_train)
+    Y_pred_train = predict_batch(network, X_train)
     cost = np.float64(0.5) * np.sum((Y_train - Y_pred_train)**2)
     # validacao inicial
-    Y_pred_val = model.feedForward(X_val)
+    Y_pred_val = predict_batch(network, X_val)
     val_mse = mean_squared_error(Y_val, Y_pred_val)
 
     for epoch in range(max_epochs):
         # backpropagation - 1 ordem
-        J = model.calculateJacobian(X_train)
-        residuals = Y_train - model.feedForward(X_train)
-
+        J = network.calculateJacobian(X_train)
+        residuals = Y_train - predict_batch(network, X_train)
         # hessiana
         A = J.T @ J
+        print(f"Dimensão da Hessiana A: {A.shape}")
         g = J.T @ residuals
+        print(f"Dimensão do Gradiente g: {g.shape}")
 
         # teste de convergencia
         if np.linalg.norm(g, ord=np.inf) < 1e-6:
@@ -97,33 +127,38 @@ def train_lm_full(network :NeuronNetwork,
         # busca por melhor passo
         while True:
             A_lm = A + lambda_val * np.identity(len(a))
+            print(f"Dimensão de A_lm: {A_lm.shape}")
 
             try:
                 # resolver para delta_a
                 delta_a = np.linalg.solve(A_lm, g)
+                print(f"Dimensão do Delta_a: {delta_a.shape}")
             except np.linalg.LinAlgError:
                 lambda_val *= v
                 v *= 2
                 continue
             
             # Novo vetor de pesos (tentativa)
+            delta_a = delta_a.flatten()
             a_new = a + delta_a
-            model.setWeightsArray(a_new)
+            print(f"DEBUG: Tamanho de a_new ANTES de setWeightsArray: {a_new.size}")
+            network.setWeightsArray(a_new)
 
             # custo & residuos
-            Y_pred_train_new = model.forward_propagation(X_train)
+            Y_pred_train_new = predict_batch(network, X_train)
             cost_new = np.float64(0.5) * np.sum((Y_train - Y_pred_train_new)**2)
 
             # avalia a qualidade do passo
             reduction_real = cost - cost_new
-            reduction_predicted = delta_a.T @ (lambda_val * delta_a - g) / np.flaot64(2.0)
+            reduction_predicted = delta_a.T @ (lambda_val * delta_a - g) / np.float64(2.0)
+            reduction_predicted = reduction_predicted[0]
 
             if reduction_predicted == 0:
                 rho = -1.0
             else:
                 rho = reduction_real / reduction_predicted
 
-            if rho > 0.0:
+            if rho.item() > 0.0:
                 # aceita a_new & reduz lambda
                 a = a_new
                 cost = cost_new
@@ -134,10 +169,21 @@ def train_lm_full(network :NeuronNetwork,
                 # Rejeita a_new & aumenta lambda
                 lambda_val *= v
                 v *= 2
-                model.setWeightsArray(a)
-        
+                network.setWeightsArray(a)
+
+                if lambda_val > LIMIT_LAMBDA or v > LIMIT_V:
+                    # Se lambda e v excederem o limite, pare ou redefina-os
+                    # Se lambda é muito grande, a rede não está convergindo
+                    print(f"Aviso: Lambda ({lambda_val:.2e}) ou V ({v:.2e}) atingiu o limite. Abortando época.")
+                    
+                    # Uma estratégia: reverter e sair da busca de passo (break)
+                    network.setWeightsArray(a)
+                    lambda_val = LIMIT_LAMBDA
+                    v = np.float64(2.0)
+                    break
+
         # avaliacao
-        Y_pred_val = model.forward_propagation(X_val)
+        Y_pred_val = predict_batch(network, X_val)
         val_mse = mean_squared_error(Y_val, Y_pred_val)
         train_mse = mean_squared_error(Y_train, Y_pred_train_new)
 
@@ -157,9 +203,10 @@ def train_lm_full(network :NeuronNetwork,
                 break
 
     # melhor modelo encontrado antes do overfitting
-    model.set_weights_vector(best_weights)
+    network.setWeightsArray(best_weights)
+    history["best_val_mse"] = best_val_mse
 
-    return (model, history) 
+    return (network, history) 
 
 
 def main() -> None:
@@ -189,11 +236,11 @@ def main() -> None:
     Y_normalized, y_min, y_max = normalize_data(Y)
     X_train, Y_train, X_val, Y_val, X_test, Y_test = split_data(X_normalized, Y_normalized)
 
-    network :NeuronNetwork = NeuronNetwork(input_size,
-                                           layer_sizes,
-                                           tanh,
-                                           linear,
-                                           np.float64(0.001))
+    #network :NeuronNetwork = NeuronNetwork(input_size,
+    #                                       layer_sizes,
+    #                                       tanh,
+    #                                       linear,
+    #                                       np.float64(0.001))
     input_size :int = X_train.shape[1]
     output_size :int = Y_train.shape[1]
     best_val_mse :np.float64 = np.inf
@@ -213,7 +260,7 @@ def main() -> None:
         trained_net, history = train_lm_full(network, X_train, Y_train, X_val, Y_val)
 
         # avaliacao no teste
-        Y_test_pred = trained_net.feedForward(X_test)
+        Y_test_pred = predict_batch(trained_net, X_test)
         test_mse = mean_squared_error(Y_test, Y_test_pred)
         test_r2 = r_squared(Y_test, Y_test_pred)
 

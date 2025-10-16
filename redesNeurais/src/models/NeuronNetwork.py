@@ -160,14 +160,26 @@ class NeuronNetwork:
 
 
     def setWeightsArray(self, weightsArray :np.ndarray) -> None:
+        expectedSize :int = self.getWeightsArray().size
+
+        if weightsArray.size != expectedSize:
+            print(f"ERRO CRÍTICO: O vetor de pesos tem tamanho {weightsArray.size}, mas deveria ter {expectedSize}.\nA Jacobiana ou o LM falhou!")
+            raise ValueError("Tamanho do vetor de pesos do LM incorreto.")
+
         cursor :int = 0
         
         for layer in self.__layers:
             for neuron in layer:
                 numberOfWeights :int = neuron.getWeights().size
-                newWeights :np.ndarray = weightsArray[cursor : cursor + numberOfWeights].reshape(-1, 1)
+
+                if cursor + numberOfWeights > weightsArray.size:
+                    print(f"ERRO DE ALINHAMENTO: Cursor {cursor} + {numberOfWeights} excede {weightsArray.size}")
+                    raise ValueError("Desalinhamento do vetor LM.")
+
+                newWeights :np.ndarray = weightsArray[cursor : cursor + numberOfWeights]
+                newWeights = newWeights.reshape(-1, 1)
                 neuron.setWeights(newWeights)
-                cursor += numWeights
+                cursor += numberOfWeights
 
                 newBias :np.float64 = weightsArray[cursor]
                 neuron.setBias(newBias)
@@ -176,8 +188,8 @@ class NeuronNetwork:
 
     def calculateJacobian(self, X :np.ndarray) -> np.ndarray:
         N :int = X.shape[0]
-        numberOfParams :int = len(self.get_weights_vector())
-        J :np.ndarray = np.zeros((N, n_params))
+        numberOfParams :int = len(self.getWeightsArray())
+        J :np.ndarray = np.zeros((N, numberOfParams))
 
         hiddenLayer :List[Neurons] = self.__layers[0]
         outputNeuron :Neuron = self.__layers[1][0]
@@ -202,12 +214,12 @@ class NeuronNetwork:
                 hiddenWeightedSum :np.float64 = hiddenNeuron._Neuron__weightedSum
 
                 # backpropagation - 1 ordem
-                weightOutputJ :np.float64 = output_neuron.getWeights()[j, 0]
+                weightOutputJ :np.float64 = outputNeuron.getWeights()[j, 0]
                 deltaHidden :np.float64 = derivOutput * weightOutputJ * tanh_derivative(hiddenOutput) 
                 inputValues :np.ndarray = hiddenNeuron._Neuron__inputs.flatten()
 
                 # pesos
-                for i in range(input_values.size):
+                for i in range(inputValues.size):
                     J[k, cursor] = deltaHidden * inputValues[i]
                     cursor += 1
 
