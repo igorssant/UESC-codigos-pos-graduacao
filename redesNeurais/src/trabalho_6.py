@@ -96,8 +96,6 @@ def train_lm_full(network :NeuronNetwork,
     best_val_mse = np.inf
     epochs_no_improvement = 0
     a = network.getWeightsArray()
-    # a = a.reshape(-1, 1)
-    print(f"Tamanho REAL de 'a' no início da época: {a.size}")
     lambda_val = initial_lambda
     v = np.float64(2.0)
     LIMIT_V = np.float64(1e10)
@@ -115,9 +113,7 @@ def train_lm_full(network :NeuronNetwork,
         residuals = Y_train - predict_batch(network, X_train)
         # hessiana
         A = J.T @ J
-        print(f"Dimensão da Hessiana A: {A.shape}")
         g = J.T @ residuals
-        print(f"Dimensão do Gradiente g: {g.shape}")
 
         # teste de convergencia
         if np.linalg.norm(g, ord=np.inf) < 1e-6:
@@ -127,12 +123,10 @@ def train_lm_full(network :NeuronNetwork,
         # busca por melhor passo
         while True:
             A_lm = A + lambda_val * np.identity(len(a))
-            print(f"Dimensão de A_lm: {A_lm.shape}")
 
             try:
                 # resolver para delta_a
                 delta_a = np.linalg.solve(A_lm, g)
-                print(f"Dimensão do Delta_a: {delta_a.shape}")
             except np.linalg.LinAlgError:
                 lambda_val *= v
                 v *= 2
@@ -141,7 +135,6 @@ def train_lm_full(network :NeuronNetwork,
             # Novo vetor de pesos (tentativa)
             delta_a = delta_a.flatten()
             a_new = a + delta_a
-            print(f"DEBUG: Tamanho de a_new ANTES de setWeightsArray: {a_new.size}")
             network.setWeightsArray(a_new)
 
             # custo & residuos
@@ -172,11 +165,6 @@ def train_lm_full(network :NeuronNetwork,
                 network.setWeightsArray(a)
 
                 if lambda_val > LIMIT_LAMBDA or v > LIMIT_V:
-                    # Se lambda e v excederem o limite, pare ou redefina-os
-                    # Se lambda é muito grande, a rede não está convergindo
-                    print(f"Aviso: Lambda ({lambda_val:.2e}) ou V ({v:.2e}) atingiu o limite. Abortando época.")
-                    
-                    # Uma estratégia: reverter e sair da busca de passo (break)
                     network.setWeightsArray(a)
                     lambda_val = LIMIT_LAMBDA
                     v = np.float64(2.0)
@@ -236,11 +224,6 @@ def main() -> None:
     Y_normalized, y_min, y_max = normalize_data(Y)
     X_train, Y_train, X_val, Y_val, X_test, Y_test = split_data(X_normalized, Y_normalized)
 
-    #network :NeuronNetwork = NeuronNetwork(input_size,
-    #                                       layer_sizes,
-    #                                       tanh,
-    #                                       linear,
-    #                                       np.float64(0.001))
     input_size :int = X_train.shape[1]
     output_size :int = Y_train.shape[1]
     best_val_mse :np.float64 = np.inf

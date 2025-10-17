@@ -62,16 +62,6 @@ class NeuronNetwork:
         
         for i, neuron in enumerate(outputLayer):
             error :np.ndarray = targets[i, 0] - neuron.getOutput()
-            
-            # Aqui, você precisaria da DERIVADA da função de ativação
-            # No entanto, como não temos a derivada na classe Neuron,
-            # vamos usar o erro puro como um delta inicial (simplificação comum)
-            # ou assumir que o erro já foi multiplicado pela derivada.
-            
-            # Para uma implementação completa, a fórmula seria:
-            # delta = error * d_activation_dz(neuron.__weightedSum)
-            
-            # Armazena o delta no neurônio (usaremos um atributo dinâmico aqui)
             setattr(neuron, '_delta', error)
 
 
@@ -86,9 +76,6 @@ class NeuronNetwork:
                 weightJI :np.ndarray = nextNeuron.getWeights()[i, 0]
                 errorSum += weightJI * getattr(nextNeuron, '_delta')
             
-            # Delta da neurona atual
-            # delta_i = error_sum * d_activation_dz(neuron.__weightedSum)
-            # Simplificação: assume que a derivada está implícita
             delta :np.float64 = errorSum 
             setattr(neuron, '_delta', delta)
 
@@ -163,7 +150,6 @@ class NeuronNetwork:
         expectedSize :int = self.getWeightsArray().size
 
         if weightsArray.size != expectedSize:
-            print(f"ERRO CRÍTICO: O vetor de pesos tem tamanho {weightsArray.size}, mas deveria ter {expectedSize}.\nA Jacobiana ou o LM falhou!")
             raise ValueError("Tamanho do vetor de pesos do LM incorreto.")
 
         cursor :int = 0
@@ -173,7 +159,6 @@ class NeuronNetwork:
                 numberOfWeights :int = neuron.getWeights().size
 
                 if cursor + numberOfWeights > weightsArray.size:
-                    print(f"ERRO DE ALINHAMENTO: Cursor {cursor} + {numberOfWeights} excede {weightsArray.size}")
                     raise ValueError("Desalinhamento do vetor LM.")
 
                 newWeights :np.ndarray = weightsArray[cursor : cursor + numberOfWeights]
