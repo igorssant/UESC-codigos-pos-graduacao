@@ -84,3 +84,53 @@ class Neuron:
         
         return self.__weights * localGradient
 
+
+
+class SimpleNeuron:
+    def __init__(self,
+                 quantityOfInputs :int,
+                 quantityOfOutputs :int,
+                 activationFunction :Callable[[np.ndarray], np.ndarray] | None = None) -> None:
+        if quantityOfInputs < 1 or quantityOfOutputs < 1:
+            raise ValueError("A quantidade de entradas e saídas deve ser um número inteiro positivo.")
+
+        limit :np.float64 = np.float64(1.0) / np.sqrt(quantityOfInputs)
+        self.__weights :np.ndarray = np.random.uniform(
+            -limit * np.float64(0.01),
+            limit * np.float64(0.01),
+            size=(quantityOfInputs, quantityOfOutputs)
+        )
+        self.__bias :np.float64 = np.float64(1.0)
+        self.__activationFunction :Callable[[np.ndarray], np.ndarray] = activationFunction\
+            if activationFunction is not None\
+            else lambda x: x
+
+
+    def setWeights(self, newWeights :np.ndarray) -> None:
+        self.__weights = newWeights
+
+
+    def getWeights(self) -> np.ndarray:
+        return self.__weights
+
+
+    def setBias(self, newBias :np.float64) -> None:
+        self.__bias = newBias
+
+
+    def getBias(self) -> np.float64:
+        return self.__bias
+
+
+    def setActivationFunction(self,
+                              newActivationFunction :Callable[[np.ndarray], np.ndarray]) -> None:
+        self.__activationFunction = newActivationFunction 
+
+
+    def getActivationFunction(self) -> Callable[[np.ndarray], np.ndarray]:
+        return self.__activationFunction
+
+
+    def forward(self, input :np.ndarray) -> np.ndarray:
+        return self.__activationFunction(input)
+
