@@ -30,4 +30,6 @@ main() {
 }
 
 main $@
+# MELHOR VALOR DE THREADS: 4
+# COMO USAR: sh CompileOpenMP.sh run input3.txt 0.5 4
 
