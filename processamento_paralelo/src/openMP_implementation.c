@@ -28,6 +28,7 @@ void build_tensor_from_file(FILE *file, Ttensor *tensor);
 void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD);
 void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
 void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor);
+void print_load_balance(const long *thread_work, const int number_of_threads, const long total_work);
 
 int main(const int argc, const char *argv[]) {
     FILE *input_file,
@@ -104,7 +105,6 @@ int main(const int argc, const char *argv[]) {
     destroy_tensor_data(&tensor);
     destroy_tensor_data(&croped_tensor);
     printf("Total time: %f" endl, omp_get_wtime() - global_start);
-
     return 0;
 }
 
@@ -112,22 +112,26 @@ void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD) {
     size_t X = ptr_tensor->x,
         Y = ptr_tensor->y,
         Z = ptr_tensor->z;
+    int number_of_threads = omp_get_max_threads();
+    long *thread_work = (long*) calloc(number_of_threads, sizeof(long));
 
     // collapse(2)
-    #pragma omp parallel for schedule(guided, 16)
+    #pragma omp parallel for schedule(guided, 4)
     for(size_t i = 0; i < X; i++) {
         for(size_t j = 0; j < Y; j++) {
             for(size_t k = 0; k < Z; k++) {
                 size_t index = (i * Y * Z) + (j * Z) + k;
-
-                if(ptr_tensor->data[index] > THRESHOLD) {
-                    ptr_tensor->data[index] = 1.0;
-                } else {
-                    ptr_tensor->data[index] = 0.0;
-                }
+                
+                ptr_tensor->data[index] = (ptr_tensor->data[index] > THRESHOLD)? 1.0 : 0.0;
+                thread_work[omp_get_thread_num()]++;
             }
         }
     }
+
+    printf("BINARIZE DATA" endl);
+    print_load_balance(thread_work, number_of_threads, X * Y * Z);
+    free(thread_work);
+    return;
 }
 
 void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
@@ -137,9 +141,11 @@ void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
         x_max = 0,
         y_max = 0,
         z_max = 0;
+    int number_of_threads = omp_get_max_threads();
+    long *thread_work = (long*) calloc(number_of_threads, sizeof(long));
 
     // collapse(2)
-    #pragma omp parallel for schedule(guided, 16) reduction(min:x_min, y_min, z_min) reduction(max:x_max, y_max, z_max)
+    #pragma omp parallel for schedule(guided, 4) reduction(min:x_min, y_min, z_min) reduction(max:x_max, y_max, z_max)
     for(size_t k = 0; k < ptr_tensor->z; k++) {
         for(size_t i = 0; i < ptr_tensor->x; i++) {
             for(size_t j = 0; j < ptr_tensor->y; j++) {
@@ -170,6 +176,9 @@ void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
                         z_max = k;
                     }
                 }
+
+                thread_work[omp_get_thread_num()]++;
+
             }
         }
     }
@@ -180,12 +189,18 @@ void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
     ptr_coordinates->x_end = x_max;
     ptr_coordinates->y_end = y_max;
     ptr_coordinates->z_end = z_max;
+    printf("GET INDICES" endl);
+    print_load_balance(thread_work, number_of_threads, ptr_tensor->x * ptr_tensor->y * ptr_tensor->z);
+    free(thread_work);
+    return;
 }
 
 void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor) {
     Tcoordinates coordinates;
     size_t total_elements,
         slice_size;
+    int number_of_threads = omp_get_max_threads();
+    long *thread_work = (long*) calloc(number_of_threads, sizeof(long));
 
     get_indices(ptr_input_tensor, &coordinates);
 
@@ -202,14 +217,49 @@ void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor) {
     slice_size = ptr_output_tensor->z * sizeof(double);
     
     // collapse(1)
-    #pragma omp parallel for schedule(guided, 16)
+    #pragma omp parallel for schedule(guided, 4)
     for(size_t i = coordinates.x_begin; i <= coordinates.x_end; i++) {
         for(size_t j = coordinates.y_begin; j <= coordinates.y_end; j++) {
             size_t output_index = ((i - coordinates.x_begin) * ptr_output_tensor->y * ptr_output_tensor->z) + ((j - coordinates.y_begin) * ptr_output_tensor->z),
                 input_index = (i * ptr_input_tensor->y * ptr_input_tensor->z) + (j * ptr_input_tensor->z) + coordinates.z_begin;
 
             memcpy(&ptr_output_tensor->data[output_index], &ptr_input_tensor->data[input_index], slice_size);
+            thread_work[omp_get_thread_num()]++;
         }
     }
+
+    printf("CROP DATA" endl);
+    print_load_balance(thread_work, number_of_threads, ptr_input_tensor->x * ptr_input_tensor->y * ptr_input_tensor->z);
+    free(thread_work);
+    return;
+}
+
+void print_load_balance(const long *thread_work, const int number_of_threads, const long total_work) {
+    long max_work = 0,
+        min_work = total_work;
+    double imbalance;
+
+    for(int i = 0; i < number_of_threads; i++) {
+        double percentage = (100.0 * thread_work[i]) / total_work;
+
+        printf("Thread %d -> %ld iterations (%f)" endl, i, thread_work[i], percentage);
+
+        if(thread_work[i] > max_work) {
+            max_work = thread_work[i];
+        }
+
+        if(thread_work[i] < min_work) {
+            min_work = thread_work[i];
+        }
+    }
+
+    imbalance = ((double) (max_work - min_work) / max_work) * 100.0;
+
+    printf("===== LOAD BALANCING ======" endl);
+    printf("Max work: %ld" endl, max_work);
+    printf("Min work: %ld" endl, min_work);
+    printf("Imbalance: %f%%" endl, imbalance);
+    printf("===========================" endl);
+    return;
 }
 

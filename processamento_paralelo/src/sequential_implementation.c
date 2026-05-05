@@ -95,21 +95,16 @@ int main(const int argc, const char *argv[]) {
     destroy_tensor_data(&tensor);
     destroy_tensor_data(&croped_tensor);
     printf("Total time: %lf" endl, (double) (clock() - global_start) / CLOCKS_PER_SEC);
-
     return 0;
 }
 
 void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD) {
     for(size_t k = 0; k < ptr_tensor->z; k++) {
         for(size_t i = 0; i < ptr_tensor->x; i++) {
-            for (size_t j = 0; j < ptr_tensor->y; j++) {
+            for(size_t j = 0; j < ptr_tensor->y; j++) {
                 size_t index = (i * ptr_tensor->y * ptr_tensor->z) + (j * ptr_tensor->z) + k;
 
-                if(ptr_tensor->data[index] <= THRESHOLD) {
-                     ptr_tensor->data[index] = 0.0;
-                } else {
-                    ptr_tensor->data[index] = 1.0;
-                }
+                ptr_tensor->data[index] = (ptr_tensor->data[index] > THRESHOLD)? 1.0 : 0.0;
             }
         }
     }
@@ -201,6 +196,7 @@ void check_pixel(const size_t i, const size_t j, const size_t k, const Ttensor *
             ptr_coordinates->z_end = k;
         }
     }
+
     return;
 }
 
