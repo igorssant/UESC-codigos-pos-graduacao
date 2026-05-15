@@ -26,7 +26,7 @@ typedef struct coordinates {
 void omp_configuration(const unsigned int number_of_threads);
 void build_tensor_from_file(FILE *file, Ttensor *tensor);
 void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD);
-void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
+void get_indices_with_padding(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
 void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor);
 void print_load_balance(const long *thread_work, const int number_of_threads, const long total_work);
 
@@ -109,18 +109,14 @@ int main(const int argc, const char *argv[]) {
 }
 
 void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD) {
-    size_t X = ptr_tensor->x,
-        Y = ptr_tensor->y,
-        Z = ptr_tensor->z;
     int number_of_threads = omp_get_max_threads();
     long *thread_work = (long*) calloc(number_of_threads, sizeof(long));
 
-    // collapse(2)
-    #pragma omp parallel for schedule(guided, 4)
-    for(size_t i = 0; i < X; i++) {
-        for(size_t j = 0; j < Y; j++) {
-            for(size_t k = 0; k < Z; k++) {
-                size_t index = (i * Y * Z) + (j * Z) + k;
+    #pragma omp parallel for schedule(static)
+    for(size_t k = 0; k < ptr_tensor->z; k++) {
+        for(size_t i = 0; i < ptr_tensor->x; i++) {
+            for(size_t j = 0; j < ptr_tensor->y; j++) {
+                size_t index = (i * ptr_tensor->y * ptr_tensor->z) + (j * ptr_tensor->z) + k;
                 
                 ptr_tensor->data[index] = (ptr_tensor->data[index] > THRESHOLD)? 1.0 : 0.0;
                 thread_work[omp_get_thread_num()]++;
@@ -129,12 +125,12 @@ void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD) {
     }
 
     printf("BINARIZE DATA" endl);
-    print_load_balance(thread_work, number_of_threads, X * Y * Z);
+    print_load_balance(thread_work, number_of_threads, ptr_tensor->x * ptr_tensor->y * ptr_tensor->z);
     free(thread_work);
     return;
 }
 
-void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
+void get_indices_with_padding(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
     size_t x_min = ptr_tensor->x,
         y_min = ptr_tensor->y,
         z_min = ptr_tensor->z,
@@ -144,8 +140,7 @@ void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
     int number_of_threads = omp_get_max_threads();
     long *thread_work = (long*) calloc(number_of_threads, sizeof(long));
 
-    // collapse(2)
-    #pragma omp parallel for schedule(guided, 4) reduction(min:x_min, y_min, z_min) reduction(max:x_max, y_max, z_max)
+    #pragma omp parallel for schedule(static) reduction(min:x_min, y_min, z_min) reduction(max:x_max, y_max, z_max)
     for(size_t k = 0; k < ptr_tensor->z; k++) {
         for(size_t i = 0; i < ptr_tensor->x; i++) {
             for(size_t j = 0; j < ptr_tensor->y; j++) {
@@ -183,12 +178,12 @@ void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
         }
     }
 
-    ptr_coordinates->x_begin = x_min;
-    ptr_coordinates->y_begin = y_min;
-    ptr_coordinates->z_begin = z_min;
-    ptr_coordinates->x_end = x_max;
-    ptr_coordinates->y_end = y_max;
-    ptr_coordinates->z_end = z_max;
+    ptr_coordinates->x_begin = (x_min > 5) ? x_min - 5 : 0;
+    ptr_coordinates->y_begin = (y_min > 5) ? y_min - 5 : 0;
+    ptr_coordinates->z_begin = (z_min > 5) ? z_min - 5 : 0;
+    ptr_coordinates->x_end = (x_max + 5 < ptr_tensor->x) ? x_max + 5 : ptr_tensor->x - 1;
+    ptr_coordinates->y_end = (y_max + 5 < ptr_tensor->y) ? y_max + 5 : ptr_tensor->y - 1;
+    ptr_coordinates->z_end = (z_max + 5 < ptr_tensor->z) ? z_max + 5 : ptr_tensor->z - 1;
     printf("GET INDICES" endl);
     print_load_balance(thread_work, number_of_threads, ptr_tensor->x * ptr_tensor->y * ptr_tensor->z);
     free(thread_work);
@@ -197,12 +192,13 @@ void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
 
 void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor) {
     Tcoordinates coordinates;
-    size_t total_elements,
-        slice_size;
+    size_t slice_size = 0,
+        output_index = 0,
+        total_elements;
     int number_of_threads = omp_get_max_threads();
     long *thread_work = (long*) calloc(number_of_threads, sizeof(long));
 
-    get_indices(ptr_input_tensor, &coordinates);
+    get_indices_with_padding(ptr_input_tensor, &coordinates);
 
     if(coordinates.x_end < coordinates.x_begin) {
         printf("Error: No data was found.\n");
@@ -213,15 +209,16 @@ void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor) {
     ptr_output_tensor->y = coordinates.y_end - coordinates.y_begin + 1;
     ptr_output_tensor->z = coordinates.z_end - coordinates.z_begin + 1;
     total_elements = ptr_output_tensor->x * ptr_output_tensor->y * ptr_output_tensor->z;
+
     allocate_array(ptr_output_tensor, total_elements);
+
     slice_size = ptr_output_tensor->z * sizeof(double);
-    
-    // collapse(1)
-    #pragma omp parallel for schedule(guided, 4)
+
+    #pragma omp parallel for schedule(static)
     for(size_t i = coordinates.x_begin; i <= coordinates.x_end; i++) {
         for(size_t j = coordinates.y_begin; j <= coordinates.y_end; j++) {
-            size_t output_index = ((i - coordinates.x_begin) * ptr_output_tensor->y * ptr_output_tensor->z) + ((j - coordinates.y_begin) * ptr_output_tensor->z),
-                input_index = (i * ptr_input_tensor->y * ptr_input_tensor->z) + (j * ptr_input_tensor->z) + coordinates.z_begin;
+            size_t input_index = (i * ptr_input_tensor->y * ptr_input_tensor->z) + \
+                                (j * ptr_input_tensor->z) + coordinates.z_begin;
 
             memcpy(&ptr_output_tensor->data[output_index], &ptr_input_tensor->data[input_index], slice_size);
             thread_work[omp_get_thread_num()]++;

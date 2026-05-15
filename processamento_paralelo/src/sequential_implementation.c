@@ -19,9 +19,7 @@ typedef struct coordinates {
 } Tcoordinates;
 
 void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD);
-// void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
-void check_pixel(const size_t i, const size_t j, const size_t k, const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
-void get_indices_binary_search(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
+void get_indices_with_padding(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates);
 void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor);
 
 int main(const int argc, const char *argv[]) {
@@ -112,134 +110,64 @@ void binarize_data(Ttensor *ptr_tensor, const float THRESHOLD) {
     return;
 }
 
-/* void get_indices(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
-    uint8_t found_any = 0;
+void get_indices_with_padding(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
+    size_t x_min = ptr_tensor->x,
+        y_min = ptr_tensor->y,
+        z_min = ptr_tensor->z,
+        x_max = 0,
+        y_max = 0,
+        z_max = 0;
 
-    ptr_coordinates->x_begin = ptr_tensor->x;
-    ptr_coordinates->y_begin = ptr_tensor->y;
-    ptr_coordinates->z_begin = ptr_tensor->z;
-    ptr_coordinates->x_end = 0;
-    ptr_coordinates->y_end = 0;
-    ptr_coordinates->z_end = 0;
-
-    for(size_t i = 0; i < ptr_tensor->x; i++) {
-        for(size_t j = 0; j < ptr_tensor->y; j++) {
-            for(size_t k = 0; k < ptr_tensor->z; k++) {
+    for(size_t k = 0; k < ptr_tensor->z; k++) {
+        for(size_t i = 0; i < ptr_tensor->x; i++) {
+            for(size_t j = 0; j < ptr_tensor->y; j++) {
                 size_t index = (i * ptr_tensor->y * ptr_tensor->z) + (j * ptr_tensor->z) + k;
 
-                if(ptr_tensor->data[index] > 0.5) {
-                    found_any = 1;
-                    
-                    // UPDATE BEGIN VALUES
-                    if(i < ptr_coordinates->x_begin) {
-                        ptr_coordinates->x_begin = i;
+                if(ptr_tensor->data[index]) {
+                    if(i < x_min) {
+                        x_min = i;
                     }
 
-                    if(j < ptr_coordinates->y_begin) {
-                        ptr_coordinates->y_begin = j;
+                    if(j < y_min) {
+                        y_min = j;
                     }
 
-                    if(k < ptr_coordinates->z_begin) {
-                        ptr_coordinates->z_begin = k;
+                    if(k < z_min) {
+                        z_min = k;
                     }
 
-                    // UPDATE END VALUES
-                    if(i > ptr_coordinates->x_end) {
-                        ptr_coordinates->x_end = i;
+                    if(i > x_max) {
+                        x_max = i;
                     }
 
-                    if(j > ptr_coordinates->y_end) {
-                        ptr_coordinates->y_end = j;
+                    if(j > y_max) {
+                        y_max = j;
                     }
 
-                    if(k > ptr_coordinates->z_end) {
-                        ptr_coordinates->z_end = k;
+                    if(k > z_max) {
+                        z_max = k;
                     }
                 }
             }
         }
     }
 
-    if(!found_any) {
-        ptr_coordinates->x_begin = ptr_coordinates->y_begin = ptr_coordinates->z_begin = 0;
-        ptr_coordinates->x_end = ptr_coordinates->y_end = ptr_coordinates->z_end = 0;
-    }
-
-    return;
-} */
-
-void check_pixel(const size_t i, const size_t j, const size_t k, const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
-    size_t index = (i * ptr_tensor->y * ptr_tensor->z) + (j * ptr_tensor->z) + k;
-
-    if(ptr_tensor->data[index]) {
-        if(i < ptr_coordinates->x_begin) {
-            ptr_coordinates->x_begin = i;
-        }
-
-        if(j < ptr_coordinates->y_begin) {
-            ptr_coordinates->y_begin = j;
-        }
-
-        if(k < ptr_coordinates->z_begin) {
-            ptr_coordinates->z_begin = k;
-        }
-
-        if(i > ptr_coordinates->x_end) {
-            ptr_coordinates->x_end = i;
-        }
-
-        if(j > ptr_coordinates->y_end) {
-            ptr_coordinates->y_end = j;
-        }
-
-        if(k > ptr_coordinates->z_end) {
-            ptr_coordinates->z_end = k;
-        }
-    }
-
-    return;
-}
-
-void get_indices_binary_search(const Ttensor *ptr_tensor, Tcoordinates *ptr_coordinates) {
-    size_t X = ptr_tensor->x,
-        Y = ptr_tensor->y,
-        Z = ptr_tensor->z,
-        mid_x = X / 2;
-
-    ptr_coordinates->x_begin = X;
-    ptr_coordinates->y_begin = Y;
-    ptr_coordinates->z_begin = Z;
-    ptr_coordinates->x_end = 0;
-    ptr_coordinates->y_end = 0;
-    ptr_coordinates->z_end = 0;
-
-    // [0, mid - 1]
-    for(int i = (int) mid_x; i >= 0; i--) {
-        for(size_t j = 0; j < Y; j++) {
-            for(size_t k = 0; k < Z; k++) {
-                check_pixel((size_t) i, j, k, ptr_tensor, ptr_coordinates);
-            }
-        }
-    }
-
-    // [mid, end - 1]
-    for(size_t i = mid_x + 1; i < X; i++) {
-        for(size_t j = 0; j < Y; j++) {
-            for(size_t k = 0; k < Z; k++) {
-                check_pixel(i, j, k, ptr_tensor, ptr_coordinates);
-            }
-        }
-    }
-
+    ptr_coordinates->x_begin = (x_min > 5) ? x_min - 5 : 0;
+    ptr_coordinates->y_begin = (y_min > 5) ? y_min - 5 : 0;
+    ptr_coordinates->z_begin = (z_min > 5) ? z_min - 5 : 0;
+    ptr_coordinates->x_end = (x_max + 5 < ptr_tensor->x) ? x_max + 5 : ptr_tensor->x - 1;
+    ptr_coordinates->y_end = (y_max + 5 < ptr_tensor->y) ? y_max + 5 : ptr_tensor->y - 1;
+    ptr_coordinates->z_end = (z_max + 5 < ptr_tensor->z) ? z_max + 5 : ptr_tensor->z - 1;
     return;
 }
 
 void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor) {
     Tcoordinates coordinates;
     size_t slice_size = 0,
-        output_index = 0;
+        output_index = 0,
+        total_elements;
 
-    get_indices_binary_search(ptr_input_tensor, &coordinates);
+    get_indices_with_padding(ptr_input_tensor, &coordinates);
 
     if(coordinates.x_end < coordinates.x_begin) {
         printf("Error: No data was found." endl);
@@ -249,12 +177,16 @@ void crop_data(const Ttensor *ptr_input_tensor, Ttensor *ptr_output_tensor) {
     ptr_output_tensor->x = coordinates.x_end - coordinates.x_begin + 1;
     ptr_output_tensor->y = coordinates.y_end - coordinates.y_begin + 1;
     ptr_output_tensor->z = coordinates.z_end - coordinates.z_begin + 1;
-    allocate_array(ptr_output_tensor, ptr_output_tensor->x * ptr_output_tensor->y * ptr_output_tensor->z);
+    total_elements = ptr_output_tensor->x * ptr_output_tensor->y * ptr_output_tensor->z;
+
+    allocate_array(ptr_output_tensor, total_elements); 
+
     slice_size = ptr_output_tensor->z * sizeof(double);
 
     for(size_t i = coordinates.x_begin; i <= coordinates.x_end; i++) {
         for(size_t j = coordinates.y_begin; j <= coordinates.y_end; j++) {
-            size_t input_index = (i * ptr_input_tensor->y * ptr_input_tensor->z) + (j * ptr_input_tensor->z) + coordinates.z_begin;
+            size_t input_index = (i * ptr_input_tensor->y * ptr_input_tensor->z) + \
+                                (j * ptr_input_tensor->z) + coordinates.z_begin;
 
             memcpy(&ptr_output_tensor->data[output_index], &ptr_input_tensor->data[input_index], slice_size);
             output_index += ptr_output_tensor->z;
