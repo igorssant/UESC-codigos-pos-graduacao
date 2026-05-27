@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 compile() {
     echo "Compiling CUDA implementation...\n"
     nvcc -o bin/CUDA -O3 -use_fast_math -arch=sm_90 -Xcompiler -Wall src/CUDA_implementation.cu src/config.c src/tensor.c -Ilib

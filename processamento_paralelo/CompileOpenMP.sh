@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 compile() {
     echo "Compiling OpenMP implementation...\n"
     gcc -o bin/openMP -Wall -O3 -fopenmp src/openMP_implementation.c src/config.c src/tensor.c -Ilib
@@ -13,7 +15,7 @@ run() {
 main() {
     if [ "$#" -lt 1 ]; then
         echo "Bad arguments: $@"
-        exit
+        exit 1
     fi
 
     if [ "$1" = "compile" ]; then
