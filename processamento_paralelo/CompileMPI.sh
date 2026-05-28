@@ -9,7 +9,7 @@ compile() {
 
 run() {
     echo "Running MPI implementation...\n"
-    mpirun -np "$4" ./bin/MPI "$1" "$2" "$3"
+    mpirun -np "$3" ./bin/MPI "$1" "$2"
 }
 
 main() {
