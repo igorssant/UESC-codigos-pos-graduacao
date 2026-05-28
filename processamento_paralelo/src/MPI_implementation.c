@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     // apenas rank 0 gerencia a leitura do arquivo em disco
     if(rank == 0) {
         configuration();
-        input_file = fopen(filename, "current_rank");
+        input_file = fopen(filename, "r");
 
         if(input_file == NULL) {
             printf("Could not find file *%s*" endl, filename);
