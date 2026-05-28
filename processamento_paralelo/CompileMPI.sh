@@ -4,7 +4,7 @@ set -e
 
 compile() {
     echo "Compiling MPI implementation...\n"
-    mpicc -o bin/MPI -Wall -O3 src/mpi_implementation.c src/config.c src/tensor.c -Ilib
+    mpicc -o bin/MPI -Wall -O3 src/MPI_implementation.c src/config.c src/tensor.c -Ilib
 }
 
 run() {
