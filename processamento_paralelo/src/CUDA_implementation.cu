@@ -1,5 +1,7 @@
+#include <ctime>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <cuda_runtime.h>
 
 #ifdef _WIN32
@@ -138,6 +140,9 @@ EXPORT __host__ void bounding_box_pipeline(
         number_of_blocks((x_axis + threads_in_block.x - 1) / threads_in_block.x,
                          (y_axis + threads_in_block.y - 1) / threads_in_block.y,
                          (z_axis + threads_in_block.z - 1) / threads_in_block.z);
+    // calculo dos tempos
+    time_t start,
+        total_time = clock();
 
     // alocando espaco CUDA
     cudaMalloc((void**) &device_input_data, x_axis * y_axis * z_axis * sizeof(double));
@@ -147,16 +152,23 @@ EXPORT __host__ void bounding_box_pipeline(
     cudaMemcpy(device_input_data, host_input_data_ptr, x_axis * y_axis * z_axis * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(device_coordinates, host_coordinates, 6 * sizeof(int), cudaMemcpyHostToDevice);
 
+    start = clock();
     // chamando a funcao na GPU
     binarize_data<<<number_of_blocks, threads_in_block>>>(device_input_data, x_axis, y_axis, z_axis, THRESHOLD, device_coordinates);
     cudaDeviceSynchronize();
+    printf("Tempo (binarize_data): %.3lf\n", (double) (clock() - start) / CLOCKS_PER_SEC);
+    fflush(stdout);
+    start = clock();
     apply_padding_and_dimensions<<<1, 1>>>(device_coordinates, x_axis, y_axis, z_axis, device_output_dimensions);
+    printf("Tempo (apply_padding_and_dimensions): %.3lf\n", (double) (clock() - start) / CLOCKS_PER_SEC);
+    fflush(stdout);
     // copia VRAM -> RAM
     cudaMemcpy(host_output_dimensions, device_output_dimensions, 3 * sizeof(int), cudaMemcpyDeviceToHost);
 
     // verificacao de erro no bounding box
     if(!host_output_dimensions[0]) {
         printf("Error!\nNo data was found.\n");
+        fflush(stdout);
         cudaFree(device_input_data);
         cudaFree(device_coordinates);
         cudaFree(device_output_dimensions);
@@ -172,6 +184,7 @@ EXPORT __host__ void bounding_box_pipeline(
                                (y_output_axis + threads_in_block.y - 1) / threads_in_block.y,
                                (z_output_axis + threads_in_block.z - 1) / threads_in_block.z);
 
+    start = clock();
     crop_data<<<number_of_blocks_crop, threads_in_block>>>(
         device_input_data,
         x_axis,
@@ -184,6 +197,8 @@ EXPORT __host__ void bounding_box_pipeline(
         z_output_axis
     );
     cudaDeviceSynchronize();
+    printf("Tempo (crop_data): %.3lf\n", (double) (clock() - start) / CLOCKS_PER_SEC);
+    fflush(stdout);
 
     // resultado final | copia VRAM -> RAM
     cudaMemcpy(
@@ -192,6 +207,8 @@ EXPORT __host__ void bounding_box_pipeline(
         x_output_axis * y_output_axis * z_output_axis * sizeof(double),
         cudaMemcpyDeviceToHost
     );
+    printf("Tempo total (C): %.3lf\n", (double) (clock() - total_time) / CLOCKS_PER_SEC);
+    fflush(stdout);
 
     // desalocando tudo
     cudaFree(device_input_data);
