@@ -1,0 +1,35 @@
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.386
+Tempo de execução (Python): 0.391s
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.370
+Tempo de execução (Python): 0.377s
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.340
+Tempo de execução (Python): 0.345s
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.341
+Tempo de execução (Python): 0.346s
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.318
+Tempo de execução (Python): 0.323s
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.349
+Tempo de execução (Python): 0.356s
+Tempo (binarize_data): 0.010
+Tempo (apply_padding_and_dimensions): 0.000
+Tempo (crop_data): 0.012
+Tempo total (C): 0.348
+Tempo de execução (Python): 0.354s
