@@ -2,6 +2,8 @@
 #define FUNCOES_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
 
 // questao 13
 void trocaErrada(int a, int b);
