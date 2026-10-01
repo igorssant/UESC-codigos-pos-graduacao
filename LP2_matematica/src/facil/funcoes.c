@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <math.h>
 #include "../../lib/facil/funcoes.h"
 
 int quadrado(int x) {
@@ -108,10 +110,53 @@ int dobraR(int x) {
 	return 2 * x;
 }
 
-int contaDigitos(int n) {}
+// quantidade de dígitos de n (por exemplo, 3 para 507)
+int contaDigitos(int n) {
+    int contador = 0;
 
-int somaDigitos(int n) {}
+    while(n > 9) {
+        n /= 10;
+        contador++;
+    }
 
-int inverteNumero(int n) {}
+    contador++;
+    return contador;
+}
 
-int ehPalindromo(int n) {}
+// soma dos dígitos de n (por exemplo, 12 para 507)
+int somaDigitos(int n) {
+    int soma = 0;
+
+    while(n > 9) {
+        int digito = n % 10;
+
+        n /= 10;
+        soma += digito;
+    }
+
+    soma += n;
+    return soma;
+}
+
+// número com os dígitos na ordem inversa (por exemplo, 4321 para 1234)
+int inverteNumero(int n) {
+    int invertido = 0;
+
+    while(n != 0) {
+        int ultimoDigito = n % 10;
+
+        invertido = (invertido * 10) + ultimoDigito;
+        n /= 10;
+    }
+
+    return invertido;
+}
+
+// retorna 1 se n for palíndromo, usando obrigatoriamente inverteNumero
+int ehPalindromo(int n) {
+    if(n < 0) {
+        return 0;
+    }
+
+    return n == inverteNumero(n);
+}
