@@ -9,6 +9,6 @@ fi
 
 src="src/$1"
 target="bin/$2"
-which_lib="lib/$3/funcoes.c"
+which_lib="src/$3/funcoes.c"
 
 gcc -Wall -Wextra "$src" "$which_lib" -o "$target" -lm -Ilib

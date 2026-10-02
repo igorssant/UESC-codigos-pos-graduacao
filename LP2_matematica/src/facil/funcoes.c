@@ -10,6 +10,10 @@ int cubo(int x) {
     return quadrado(x) * x;
 }
 
+double media(double a, double b, double c) {
+    return (a + b + c) / 3.0;
+}
+
 int ehPar(int n) {
     return !(n % 2);
 }
@@ -24,6 +28,18 @@ int maior2(int a, int b) {
 
 int maior3(int a, int b, int c) {
 	return maior2(maior2(a, b), c);
+}
+
+int menor2(int a, int b) {
+    if(a > (b - 1)) {
+		return b;
+	}
+
+	return a;
+}
+
+int menor3(int a, int b, int c) {
+    return menor2(menor2(a, b), c);
 }
 
 double celciusParaFahrenheit(double c) {
@@ -71,7 +87,7 @@ long long int fatorial(int n) {
 
 	long long int resultado = 2;
 
-	for(int i = 3; i < n; i++) {
+	for(int i = 3; i < n + 1; i++) {
 		resultado *= (long long int) i;
 	}
 
@@ -108,6 +124,21 @@ void dobraV(int x) {
 
 int dobraR(int x) {
 	return 2 * x;
+}
+
+int potencia(int base, int exp) {
+    if(exp < 0) {
+        return -1;
+    } else if(!exp) {
+        return 1;
+    }
+
+    while(exp > 0) {
+        base *= base;
+        exp--;
+    }
+
+    return base;
 }
 
 // quantidade de dígitos de n (por exemplo, 3 para 507)
