@@ -1,6 +1,6 @@
+#include "../../lib/facil/funcoes.h"
 #include <stdio.h>
 #include <math.h>
-#include "../../lib/facil/funcoes.h"
 
 int quadrado(int x) {
     return x * x;

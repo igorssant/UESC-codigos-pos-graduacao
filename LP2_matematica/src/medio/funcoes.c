@@ -1,18 +1,19 @@
+#include "../../lib/medio/funcoes.h"
+#include <iso646.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../../lib/medio/funcoes.h"
 
 void trocaErrada(int a, int b) {
     int temp = a;
 
     a = b;
     b = temp;
-    printf("===== trocaErrada() :: apos a troca =====");
+    printf("===== trocaErrada() :: apos a troca =====\n");
     printf("O valor de a: %d\n", a);
-    printf("-----------------------------------------");
+    printf("-----------------------------------------\n");
     printf("O valor de b: %d\n", b);
-    printf("=========================================");
+    printf("=========================================\n");
 }
 
 void troca(int *a, int *b) {
@@ -20,11 +21,11 @@ void troca(int *a, int *b) {
 
     *a = *b;
     *b = temp;
-    printf("===== troca() :: apos a troca =====");
+    printf("===== troca() :: apos a troca =====\n");
     printf("O valor de a: %d\n", *a);
-    printf("-----------------------------------");
+    printf("-----------------------------------\n");
     printf("O valor de b: %d\n", *b);
-    printf("===================================");
+    printf("===================================\n");
 }
 
 void ordena2(int *a, int *b) {
@@ -34,8 +35,10 @@ void ordena2(int *a, int *b) {
 }
 
 void ordena3(int *a, int *b, int *c) {
-    ordena2(b, c);
-    ordena2(a, b);
+    for(int i = 0; i < 2; i++) {
+        ordena2(a, b);
+        ordena2(b, c);
+    }
 }
 
 int divide(int a, int b, int *q, int *r) {
