@@ -1,6 +1,7 @@
 #ifndef FUNCOES_H
 #define FUNCOES_H
 
+#include "../medio/funcoes.h"
 #include <stdio.h>
 #define MAX 10
 
