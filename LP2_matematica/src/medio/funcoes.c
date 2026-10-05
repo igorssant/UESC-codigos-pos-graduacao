@@ -123,8 +123,6 @@ void inverteVetor(int v[], int n) {
         return;
     }
 
-    double vetor_invertido[n];
-
     for(int i = 0; i < 1 + (n / 2); i++) {
         troca(&v[i], &v[n - 1 - i]);
     }
