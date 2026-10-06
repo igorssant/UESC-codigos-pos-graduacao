@@ -1,7 +1,6 @@
 #ifndef FUNCOES_H
 #define FUNCOES_H
 
-#include "../medio/funcoes.h"
 #include <stdio.h>
 #define MAX 10
 
@@ -17,8 +16,8 @@ int bissecao(double a, double b, double tol, int maxIter, double *raiz, int *ite
 int iteracoesTeoricas(double a, double b, double tol);
 // questao 24
 double g(double x);
-double trapezio(double a, double b, double n);
-int simpson(double a, double b, double n, double *resultado);
+double trapezio(double a, double b, int n);
+int simpson(double a, double b, int n, double *resultado);
 // questao 25
 void leMatriz(int n, double A[][MAX]);
 void imprimeMatriz(int n, double A[][MAX]);
