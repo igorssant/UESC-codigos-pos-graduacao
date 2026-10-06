@@ -1,4 +1,6 @@
 #include "../../lib/dificil/funcoes.h"
+#include <cstdio>
+#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -153,6 +155,22 @@ int bissecao(double a, double b, double tol, int maxIter, double *raiz, int *ite
     return 0;
 }
 
+int iteracoesTeoricas(double a, double b, double tol) {
+    if(a > (b - 1) || tol <= 0.0) {
+        return 0;
+    }
+
+    int iteracoes = 0;
+    double amplitude = b - a;
+
+    while(amplitude >= tol) {
+        amplitude /= 2.0;
+        iteracoes++;
+    }
+
+    return iteracoes;
+}
+
 double g(double x) {
     return sin(x);
 }
@@ -195,3 +213,300 @@ int simpson(double a, double b, int n, double *resultado) {
     *resultado = (h / 3.0) * soma;
     return 1;
 }
+
+void leMatriz(int n, double A[][MAX]) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < MAX; j++) {
+            scanf("%lf", &A[i][j]);
+        }
+    }
+}
+
+void imprimeMatriz(int n, double A[][MAX]) {
+    for(int i = 0; i < n; i++) {
+        printf("[\t");
+
+        for(int j = 0; j < MAX; j++) {
+            printf("%.2lf\t", A[i][j]);
+        }
+
+        printf("]\n");
+    }
+}
+
+void multiplica(int n, double A[][MAX], double B[][MAX], double C[][MAX]) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < MAX; j++) {
+            C[i][j] = 0.0;
+
+            for(int k = 0; k < MAX; k++) {
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+void transposta(int n, double A[][MAX], double T[][MAX]) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < MAX; j++) {
+            T[j][i] = A[i][j];
+        }
+    }
+}
+
+double traco(int n, double A[][MAX]) {
+    double soma = 0.0;
+    int limite = (n < MAX) ? n : MAX; // diagonal principal
+
+    for(int i = 0; i < limite; i++) {
+        soma += A[i][i];
+    }
+
+    return soma;
+}
+
+int ehSimetrica(int n, double A[][MAX]) {
+    if(n != MAX) {
+        return 0;
+    }
+
+    for(int i = 0; i < n; i++) {
+        for(int j = i + 1; j < n; j++) {
+            if(A[i][j] != A[j][i]) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+int iguais(int n, double A[][MAX], double B[][MAX], double tol) {
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < MAX; j++) {
+            if(fabs(A[i][j] - B[i][j]) >= tol) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+void potenciaMatriz(int n, double A[][MAX], int k, double P[][MAX]) {
+    // se k == 0, a matriz eh identidade
+    if(k == 0) {
+        for(int i = 0; i < n; i++) {
+            for(int j = 0; j < MAX; j++) {
+                P[i][j] = (i == j) ? 1.0 : 0.0;
+            }
+        }
+
+        return;
+    }
+
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < MAX; j++) {
+            P[i][j] = A[i][j];
+        }
+    }
+
+    // se k == 1, o resultado eh A
+    if(k == 1) {
+        return;
+    }
+
+    double temp[MAX][MAX];
+
+    for(int p = 2; p < (k + 1); p++) {
+        multiplica(n, P, A, temp);
+
+        for(int i = 0; i < n; i++) {
+            for(int j = 0; j < MAX; j++) {
+                P[i][j] = temp[i][j];
+            }
+        }
+    }
+}
+
+int crivo(int n, int ehPrimo[]) {
+    if(n < 0 || ehPrimo == NULL) {
+        return 0;
+    }
+
+    // assumindo valores primos
+    for(int i = 0; i <= n; i++) {
+        ehPrimo[i] = 1;
+    }
+
+    if(n > -1) {
+        ehPrimo[0] = 0;
+    }
+
+    if(n > 0) {
+        ehPrimo[1] = 0;
+    }
+
+    // crivo de eratostenes
+    for (int i = 2; i * i <= n; i++) {
+        if(ehPrimo[i]) {
+            for(int j = i * i; j < (n + 1); j += i) {
+                // marcando multiplos de i como nn-primos
+                ehPrimo[j] = 0;
+            }
+        }
+    }
+
+    // conta a quantidade total de primos
+    int qtd_primos = 0;
+
+    for(int i = 0; i < (n + 1); i++) {
+        if(ehPrimo[i]) {
+            qtd_primos++;
+        }
+    }
+
+    return qtd_primos;
+}
+
+int goldbach(int n, const int ehPrimo[], int *p, int *q) {
+    if(n < 3 || !(n % 2) || ehPrimo == NULL || p == NULL || q == NULL) {
+        return 0;
+    }
+
+    for(int i = 2; i < ((n / 2) + 1); i++) {
+        if(ehPrimo[i] && ehPrimo[n - i]) {
+            *p = i;
+            *q = n - i;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int contaDecomposicoes(int n, const int ehPrimo[]) {
+    if(n < 3 || !(n % 2) || ehPrimo == NULL) {
+        return 0;
+    }
+
+    int contador = 0;
+
+    for(int i = 2; i < ((n / 2) + 1); i++) {
+        if(ehPrimo[i] && ehPrimo[n - i]) {
+            contador++;
+        }
+    }
+
+    return contador;
+}
+
+int valorDigito(char c) {
+    if(c >= '0' && c <= '9') {
+        return c - '0';
+    }
+
+    if(c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+
+    if(c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+
+    return -1;
+}
+
+char caractereDigito(int d) {
+    if(d >= 0 && d <= 9) {
+        return '0' + d;
+    }
+
+    if(d >= 10 && d <= 15) {
+        return 'A' + (d - 10);
+    }
+
+    return '\0';
+}
+
+int decimalParaBase(int n, int base, char s[]) {
+    if(n < 0 || base < 2 || base > 16 || s == NULL) {
+        return 0;
+    }
+
+    // caso n = 0
+    if(n == 0) {
+        s[0] = caractereDigito(0);
+        s[1] = '\0';
+        return 1;
+    }
+
+    int qtd_digitos = 0,
+        temp = n;
+
+    // extraindo os digitos do menor para o maior peso
+    while(temp > 0) {
+        int resto = temp % base;
+
+        s[qtd_digitos++] = caractereDigito(resto);
+        temp /= base;
+    }
+
+    s[qtd_digitos] = '\0';
+
+    // invertento a string para obter a ordem correta dos digitos
+    for(int i = 0; i < (qtd_digitos / 2); i++) {
+        char aux = s[i];
+
+        s[i] = s[qtd_digitos - 1 - i];
+        s[qtd_digitos - 1 - i] = aux;
+    }
+
+    return qtd_digitos;
+}
+
+int baseParaDecimal(const char s[], int base, int *valor) {
+    if(s == NULL || valor == NULL || base < 2 || base > 16 || s[0] == '\0') {
+        return 0;
+    }
+
+    int acumulador = 0;
+
+    for(int i = 0; s[i] != '\0'; i++) {
+        int d = valorDigito(s[i]);
+
+        if (d == -1 || d >= base) {
+            return 0;
+        }
+
+        // metodo de Horner
+        acumulador = acumulador * base + d;
+    }
+
+    *valor = acumulador;
+    return 1;
+}
+
+double horner(const double c[], int grau, double x) {}
+
+int derivada(const double c[], int grau, double d[]) {}
+
+int newton(const double c[], int grau, double x0, double tol, int maxIter, double *raiz, int *iter) {}
+
+void somaC(double a, double b, double c, double d, double *re, double *im) {}
+
+void multiplicaC(double a, double b, double c, double d, double *re, double *im) {}
+
+int divideC(double a, double b, double c, double d, double *re, double *im) {}
+
+double moduloC(double a, double b) {}
+
+double argumentoC(double a, double b) {}
+
+void polarParaRetangular(double r, double theta, double *a, double *b) {}
+
+void potenciaC(double a, double b, int n, double *re, double *im) {}
+
+int raizesC(double a, double b, int n, double re[], double im[]) {}
+
+void imprimeC(double a, double b) {}
