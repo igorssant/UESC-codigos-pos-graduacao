@@ -1,5 +1,4 @@
 #include "../../lib/dificil/funcoes.h"
-#include <cstdio>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -487,26 +486,182 @@ int baseParaDecimal(const char s[], int base, int *valor) {
     return 1;
 }
 
-double horner(const double c[], int grau, double x) {}
+double horner(const double c[], int grau, double x) {
+    if(c == NULL || grau < 0) {
+        return 0.0;
+    }
 
-int derivada(const double c[], int grau, double d[]) {}
+    double resultado = c[grau];
+    
+    for(int i = grau - 1; i > -1; i--) {
+        resultado = resultado * x + c[i];
+    }
 
-int newton(const double c[], int grau, double x0, double tol, int maxIter, double *raiz, int *iter) {}
+    return resultado;
+}
 
-void somaC(double a, double b, double c, double d, double *re, double *im) {}
+int derivada(const double c[], int grau, double d[]) {
+    if(c == NULL || d == NULL || grau < 0) {
+        return 0;
+    }
 
-void multiplicaC(double a, double b, double c, double d, double *re, double *im) {}
+    // polinomio constante: 0
+    if(grau == 0) {
+        d[0] = 0.0;
+        return 0;
+    }
 
-int divideC(double a, double b, double c, double d, double *re, double *im) {}
+    for(int i = 0; i < grau; i++) {
+        d[i] = (i + 1) * c[i + 1];
+    }
 
-double moduloC(double a, double b) {}
+    return grau - 1;
+}
 
-double argumentoC(double a, double b) {}
+int newton(const double c[], int grau, double x0, double tol, int maxIter, double *raiz, int *iter) {
+    if(c == NULL || raiz == NULL || iter == NULL || grau < 1 || tol <= 0.0 || maxIter < 1) {
+        return 0;
+    }
 
-void polarParaRetangular(double r, double theta, double *a, double *b) {}
+    double *d = (double *) malloc(grau * sizeof(double));
 
-void potenciaC(double a, double b, int n, double *re, double *im) {}
+    if(d == NULL) {
+        return 0;
+    }
 
-int raizesC(double a, double b, int n, double re[], double im[]) {}
+    int grau_d = derivada(c, grau, d),
+        k = 0;
+    double x = x0;
 
-void imprimeC(double a, double b) {}
+    while(k < maxIter) {
+        double fx = horner(c, grau, x);
+
+        k++;
+
+        // sucesso: valor do polinomio aprox 0
+        if(fabs(fx) < tol) {
+            *raiz = x;
+            *iter = k;
+            free(d);
+            return 1;
+        }
+
+        double dfx = horner(d, grau_d, x);
+
+        // falha: derivada nula (ou aprox zero)
+        if(fabs(dfx) < 1e-12) {
+            *raiz = x;
+            *iter = k;
+            free(d);
+            return 0;
+        }
+
+        double x_proximo = x - (fx / dfx);
+
+        // sucesso: convergiu
+        if(fabs(x_proximo - x) < tol) {
+            *raiz = x_proximo;
+            *iter = k;
+            free(d);
+            return 1;
+        }
+
+        x = x_proximo;
+    }
+
+    // deu ruim
+    *raiz = x;
+    *iter = k;
+    free(d);
+    return 2;
+}
+
+void somaC(double a, double b, double c, double d, double *re, double *im) {
+    if(re != NULL) {
+        *re = a + c;
+    }
+
+    if(im != NULL) {
+        *im = b + d;
+    }
+}
+
+void multiplicaC(double a, double b, double c, double d, double *re, double *im) {
+    if(re != NULL) {
+        *re = (a * c) - (b * d);
+    }
+
+    if(im != NULL) {
+        *im = (a * d) + (b * c);
+    }
+}
+
+int divideC(double a, double b, double c, double d, double *re, double *im) {
+    double den = (c * c) + (d * d);
+
+    if(den == 0.0 || re == NULL || im == NULL) {
+        return 0;
+    }
+
+    *re = (a * c + b * d) / den;
+    *im = (b * c - a * d) / den;
+    return 1;
+}
+
+double moduloC(double a, double b) {
+    return hypot(a, b);
+}
+
+double argumentoC(double a, double b) {
+    return atan2(b, a);
+}
+
+void polarParaRetangular(double r, double theta, double *a, double *b) {
+    if(a != NULL) {
+        *a = r * cos(theta);
+    }
+
+    if(b != NULL) {
+        *b = r * sin(theta);
+    }
+}
+
+void potenciaC(double a, double b, int n, double *re, double *im) {
+    if(re == NULL || im == NULL) {
+        return;
+    }
+
+    double real = moduloC(a, b),
+        theta = argumentoC(a, b),
+        real_n = pow(real, n),
+        theta_n = n * theta;
+
+    polarParaRetangular(real_n, theta_n, re, im);
+}
+
+int raizesC(double a, double b, int n, double re[], double im[]) {
+    if(n < 1 || re == NULL || im == NULL) {
+        return 0;
+    }
+
+    double real = moduloC(a, b),
+        theta = argumentoC(a, b),
+        real_raiz = pow(real, 1.0 / n);
+
+    for(int k = 0; k < n; k++) {
+        double theta_k = (theta + 2.0 * M_PI * k) / n;
+
+        polarParaRetangular(real_raiz, theta_k, &re[k], &im[k]);
+    }
+
+    return n;
+}
+
+void imprimeC(double a, double b) {
+    if(b >= 0.0) {
+        printf("%.2lf + %.2lfi\n", a, b);
+        return;
+    }
+
+    printf("%.2lf - %.2lfi\n", a, fabs(b));
+}

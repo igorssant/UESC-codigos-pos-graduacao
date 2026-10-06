@@ -22,7 +22,7 @@ double fahrenheitParaCelcius(double f);
 void repete(char c, int n);
 void retangulo(int largura, int altura);
 // questao 7
-long long int fatorial(int n);
+unsigned long long int fatorial(int n);
 // questao 8
 double areaCirculo(double r);
 double perimetroCirculo(double r);

@@ -76,8 +76,8 @@ void retangulo(int largura, int altura) {
 }
 
 
-long long int fatorial(int n) {
-	if(n < 0 || n > 20) {
+unsigned long long int fatorial(int n) {
+	if(n < 0) {
 		return -1;
 	}
 
@@ -85,10 +85,10 @@ long long int fatorial(int n) {
 		return n;
 	}
 
-	long long int resultado = 2;
+	unsigned long long int resultado = 2;
 
 	for(int i = 3; i < n + 1; i++) {
-		resultado *= (long long int) i;
+		resultado *= (unsigned long long int) i;
 	}
 
 	return resultado;
@@ -115,7 +115,7 @@ double volumeEsfera(double r) {
 		return -1;
 	}
 
-	return areaCirculo(r) * quadrado(r);
+	return (4.0 / 3.0) * M_PI * cubo(r);
 }
 
 void dobraV(int x) {
@@ -133,7 +133,7 @@ int potencia(int base, int exp) {
         return 1;
     }
 
-    while(exp > 0) {
+    while(exp > 1) {
         base *= base;
         exp--;
     }
@@ -174,16 +174,16 @@ int inverteNumero(int n) {
     int invertido = 0;
 
     while(n != 0) {
-        int ultimoDigito = n % 10;
+        int ultimo_digito = n % 10;
 
-        invertido = (invertido * 10) + ultimoDigito;
+        invertido = (invertido * 10) + ultimo_digito;
         n /= 10;
     }
 
     return invertido;
 }
 
-// retorna 1 se n for palíndromo, usando obrigatoriamente inverteNumero
+// retorna 1 se n for palindromo, usando obrigatoriamente inverteNumero
 int ehPalindromo(int n) {
     if(n < 0) {
         return 0;
