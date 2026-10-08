@@ -46,8 +46,8 @@ int divide(int a, int b, int *q, int *r) {
         return 0;
     }
 
-    int quociente = 0;
-    int resto = a;
+    int quociente = 0,
+        resto = a;
 
     while(resto >= b) {
         resto -= b;
@@ -159,7 +159,7 @@ int mdc(int a, int b) {
 }
 
 int mmc(int a, int b) {
-    if (a == 0 || b == 0) {
+    if(a == 0 || b == 0) {
         return 0;
     }
 
@@ -189,7 +189,7 @@ int primosEntreSi(int a, int b) {
 }
 
 int raizes(double a, double b, double c, double *x1, double *x2) {
-    if (a == 0.0 || x1 == NULL || x2 == NULL) {
+    if(a == 0.0 || x1 == NULL || x2 == NULL) {
         return -1;
     }
 
